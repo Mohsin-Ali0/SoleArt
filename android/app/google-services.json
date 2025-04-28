@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "272573990459",
+    "firebase_url": "https://soleart-d04d3-default-rtdb.firebaseio.com",
+    "project_id": "soleart-d04d3",
+    "storage_bucket": "soleart-d04d3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272573990459:android:3c7d4840d37e8874a77e1e",
+        "android_client_info": {
+          "package_name": "com.soleart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "272573990459-851h5qio8t2ibubpk94iu1ka8dkhndch.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.soleart",
+            "certificate_hash": "ae060d3d863ec5205b0717bd9fa3c180ef86ae2d"
+          }
+        },
+        {
+          "client_id": "272573990459-jgvjkhm8h0t6f53ikvr5g93fnneibonj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkH2I3DikH0jkRiPREGcqZ46L7HojDGy0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "272573990459-jgvjkhm8h0t6f53ikvr5g93fnneibonj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

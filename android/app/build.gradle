@@ -1,6 +1,8 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: 'com.google.gms.google-services'
+
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -10,7 +12,7 @@ react {
     /* Folders */
     //   The root of your project, i.e. where "package.json" lives. Default is '../..'
     // root = file("../../")
-    //   The folder where the react-native NPM package is. Default is ../../node_modules/react-native
+    //   The folder where the react-native NPM package is. D    efault is ../../node_modules/react-native
     // reactNativeDir = file("../../node_modules/react-native")
     //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
     // codegenDir = file("../../node_modules/@react-native/codegen")
@@ -58,6 +60,7 @@ react {
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
 def enableProguardInReleaseBuilds = false
+def hermesEnabled = project.hasProperty('hermesEnabled') ? project.hermesEnabled.toBoolean() : true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -110,10 +113,19 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation 'com.facebook.android:facebook-android-sdk:[8,9)'
+    implementation 'com.facebook.android:facebook-login:latest.release'
 
-    if (hermesEnabled.toBoolean()) {
-        implementation("com.facebook.react:hermes-android")
-    } else {
-        implementation jscFlavor
-    }
+if (hermesEnabled) {
+    implementation("com.facebook.react:hermes-android")
+} else {
+    implementation jscFlavor
+}
+  
+
+    // if (hermesEnabled.toBoolean()) {
+    //     implementation("com.facebook.react:hermes-android")
+    // } else {
+    //     implementation jscFlavor
+    // }
 }

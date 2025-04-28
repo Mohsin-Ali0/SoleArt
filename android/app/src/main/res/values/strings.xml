@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SoleArt</string>
+    <string name="facebook_app_id">3958671334349505</string>
+    <string name="fb_login_protocol_scheme">fb1234</string>
+    <string name="facebook_client_token">31ec9b7f8650c3fc0afa44a3056f3230</string>
+
+
 </resources>
