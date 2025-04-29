@@ -15,13 +15,21 @@ import {Icons} from '../../assets';
 interface LogoutModalProps {
   visible: boolean;
   onClose: () => void;
-  onLogout: () => void;
+  onPress: () => void;
+  heading: string;
+  title: string;
+  buttonTitle1: string;
+  buttonTitle2: string;
 }
 
 const LogoutModal: React.FC<LogoutModalProps> = ({
   visible,
   onClose,
-  onLogout,
+  onPress,
+  heading,
+  title,
+  buttonTitle1,
+  buttonTitle2,
 }) => {
   return (
     <Modal
@@ -38,19 +46,17 @@ const LogoutModal: React.FC<LogoutModalProps> = ({
               style={{width: 13, height: 13}}
             />
           </TouchableOpacity>
-          <Text style={styles.modalHeading}>Logout</Text>
-          <Text style={styles.modalText}>
-            Are you sure you want to log out?
-          </Text>
+          <Text style={styles.modalHeading}>{heading}</Text>
+          <Text style={styles.modalText}>{title}</Text>
           <View style={styles.buttonsContainer}>
-            <TouchableOpacity style={styles.button} onPress={onLogout}>
-              <Text style={styles.buttonText}>Yes, sure</Text>
+            <TouchableOpacity style={styles.button} onPress={onPress}>
+              <Text style={styles.buttonText}>{buttonTitle1}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.logoutButton]}
               onPress={onClose}>
               <Text style={[styles.buttonText, {color: color.primary}]}>
-                Cancel
+                {buttonTitle2}
               </Text>
             </TouchableOpacity>
           </View>

@@ -26,6 +26,7 @@ import {reset} from './navigationRef';
 const Drawer = createDrawerNavigator();
 const AuthStack = createStackNavigator();
 const RootStack = createStackNavigator();
+const AppStack = createStackNavigator();
 
 const CustomDrawerContent = ({navigation}: DrawerContentComponentProps) => {
   const {clearUserDetails} = useUserContext();
@@ -46,8 +47,7 @@ const CustomDrawerContent = ({navigation}: DrawerContentComponentProps) => {
     console.log('User logged out');
     await handleSignOut(clearUserDetails);
     setShowModal(false);
-
-    reset([{name: 'AuthFlow'}]);
+    // reset([{name: 'Auth'}]);
   };
 
   const handleLogoutRequest = () => {
@@ -77,10 +77,15 @@ const CustomDrawerContent = ({navigation}: DrawerContentComponentProps) => {
         <Image source={Icons.Logout} style={styles.LogoutIcon} />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
+
       <LogoutModal
         visible={showModal}
         onClose={() => setShowModal(false)} // Close the modal
-        onLogout={handleLogout} // Handle the logout action
+        onPress={handleLogout} // Handle the logout action
+        heading="Logout"
+        title="Are you sure you want to log out?"
+        buttonTitle1="Yes, sure"
+        buttonTitle2="Cancel"
       />
     </View>
   );
@@ -109,55 +114,44 @@ const AuthNavigator = () => (
     <AuthStack.Screen name="Splash" component={SplashScreen} />
     <AuthStack.Screen name="Login" component={LoginScreen} />
     <AuthStack.Screen name="Register" component={RegisterScreen} />
+    <AuthStack.Screen
+      name="Permissions"
+      component={PermissionsScreen} // permissions ko AuthStack me daal dena aur Login/Register ke ander conditional navigate karna HAI...................................
+      options={{gestureEnabled: false}}
+    />
   </AuthStack.Navigator>
 );
 
-const RootNavigator = () => {
+const AppNavigator = () => {
   const {isLoggedIn, isBluetoothEnabled, isNotificationEnabled} =
     useUserContext();
   const arePermissionsGranted = isBluetoothEnabled && isNotificationEnabled;
   return (
+    <AppStack.Navigator screenOptions={{headerShown: false}}>
+      {isLoggedIn && arePermissionsGranted ? (
+        <AppStack.Screen name="AppDrawer" component={AppDrawer} />
+      ) : (
+        <AppStack.Screen
+          name="Permissions"
+          component={PermissionsScreen}
+          options={{gestureEnabled: false}}
+        />
+      )}
+    </AppStack.Navigator>
+  );
+};
+const RootNavigator = () => {
+  const {isLoggedIn} = useUserContext();
+  return (
     <RootStack.Navigator screenOptions={{headerShown: false}}>
       {!isLoggedIn ? (
         <RootStack.Screen name="Auth" component={AuthNavigator} />
-      ) : arePermissionsGranted ? (
-        <RootStack.Screen name="AppFlow" component={AppDrawer} />
       ) : (
-        <RootStack.Screen
-          name="Permissions"
-          component={PermissionsScreen} // permissions ko AuthStack me daal dena aur Login/Register ke ander conditional navigate karna HAI...................................
-          options={{gestureEnabled: false}}
-        />
+        <RootStack.Screen name="AppFlow" component={AppNavigator} />
       )}
     </RootStack.Navigator>
   );
 };
-
-// const RootNavigator = () => {
-//   const {isLoggedIn, isBluetoothEnabled, isNotificationEnabled} =
-//     useUserContext();
-// const arePermissionsGranted = isBluetoothEnabled && isNotificationEnabled;
-//   // console.log('arePermissionsGranted:', arePermissionsGranted);
-//   // console.log('isLoggedIn:', isLoggedIn);
-//   return (
-//     <RootStack.Navigator screenOptions={{headerShown: false}}>
-//       <RootStack.Group>
-//         {isLoggedIn ? (
-//           arePermissionsGranted ? (
-//             <RootStack.Screen name="AppFlow" component={AppDrawer} />
-//           ) : (
-//             <RootStack.Screen
-//               name="Permissions"
-//               component={PermissionsScreen}
-//             />
-//           )
-//         ) : (
-//           <RootStack.Screen name="AuthFlow" component={AuthStack} />
-//         )}
-//       </RootStack.Group>
-//     </RootStack.Navigator>
-//   );
-// };
 
 const styles = StyleSheet.create({
   drawerContainer: {

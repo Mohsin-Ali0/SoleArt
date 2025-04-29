@@ -10,24 +10,29 @@ import {
 } from 'react-native';
 import {useDevice} from '../context/DeviceContext';
 import {ScreenHEIGHT, ScreenWIDTH} from '../utils/dimensions';
-import {Icons} from '../../assets';
+import {Icons, Images} from '../../assets';
 import {color} from '../utils/colors';
 import {fonts, fontSize} from '../utils/fonts';
 import NotificationBottomSheet from '../components/Notification';
 import LottieView from 'lottie-react-native';
 import BluetoothModal from '../components/BluetoothModal';
+import GeneralModal from '../components/GeneralModal';
 
 const HomeScreen = (props: any) => {
-  // const {isConnected, cycleStatus, scanDevices, devices, connectToDevice} =
-  //   useDevice();
-  const [isConnected, setIsConnected] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const [pressure, setPressure] = useState(500);
-  const [cycleStatus, setCycleStatus] = useState('Idle');
+  const {
+    devices,
+    isConnected,
+    notifications,
+    StartCycle,
+    StopCycle,
+    timer,
+    pressure,
+    cycleStatus,
+  } = useDevice();
+
   const [isSheetVisible, setIsSheetVisible] = useState(false);
   const [showDevices, setshowDevices] = useState(false);
-
-  const intervalRef = useRef(null); // Ref to hold the interval ID
+  const [isVisible, setIsVisible] = useState(false);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -40,42 +45,6 @@ const HomeScreen = (props: any) => {
     )}:${String(remainingSeconds).padStart(2, '0')}`;
   };
 
-  const StartCycle = (type: String) => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    switch (type) {
-      case 'Begin Conditioning':
-        setCycleStatus('Conditioning');
-        setTimer(0);
-        RunTimer();
-
-        break;
-      case 'Begin Freeze Drying':
-        setCycleStatus('Freeze Drying');
-        setTimer(0);
-        RunTimer();
-        break;
-      default:
-        break;
-    }
-  };
-
-  const StopCycle = () => {
-    setCycleStatus('Idle');
-    setTimer(0);
-
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-  };
-  const RunTimer = () => {
-    intervalRef.current = setInterval(() => {
-      setTimer(prevTimer => prevTimer + 1);
-    }, 1000);
-  };
-  const scanDevices = () => {};
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -180,7 +149,11 @@ const HomeScreen = (props: any) => {
                 backgroundColor: color.disable,
               },
             ]} // Begin Conditioning Button
-            onPress={() => StartCycle('Begin Conditioning')}
+            onPress={() =>
+              isConnected
+                ? StartCycle('Begin Conditioning')
+                : setIsVisible(true)
+            }
             disabled={cycleStatus !== 'Idle' && cycleStatus !== 'Conditioning'}>
             <Text style={styles.buttonText}>Begin Conditioning</Text>
           </TouchableOpacity>
@@ -206,7 +179,11 @@ const HomeScreen = (props: any) => {
                 backgroundColor: color.disable,
               },
             ]}
-            onPress={() => StartCycle('Begin Freeze Drying')}
+            onPress={() =>
+              isConnected
+                ? StartCycle('Begin Freeze Drying')
+                : setIsVisible(true)
+            }
             disabled={
               cycleStatus !== 'Freeze Drying' && cycleStatus !== 'Idle'
             }>
@@ -243,43 +220,21 @@ const HomeScreen = (props: any) => {
       <BluetoothModal
         visible={showDevices}
         onClose={() => setshowDevices(false)}
-        onAction={() => {}}
         heading="Scan for Devices"
-        title="Please turn on Bluetooth to scan for devices."
-        buttonTitle="Scan"
-        logo={Icons.Bluetooth}>
-        {[...Array(9)].map((_, index) => (
-          <View key={index} style={styles.notificationContainer}>
-            <View style={styles.ellipse} />
-            <View style={styles.textContainer}>
-              <Text style={styles.notificationText}>
-                Lorem Ipsum is simply dummy text of the printing and typesetting
-                industry.
-              </Text>
-              <Text style={styles.dateText}>March 20, 2024</Text>
-            </View>
-          </View>
-        ))}
-      </BluetoothModal>
-    </View>
-  );
+        title="Available PrepShef Devices:"
+        buttonTitle="Scan Now"
+        logo={Icons.Bluetooth}
+      />
 
-  return (
-    <View style={{padding: 20}}>
-      <Text>
-        Connection Status: {isConnected ? 'Connected' : 'Disconnected'}
-      </Text>
-      <Text>Cycle Status: {cycleStatus}</Text>
-
-      <Button title="Scan for Devices" onPress={scanDevices} />
-
-      {devices.map(device => (
-        <Button
-          key={device.id}
-          title={`Connect to ${device.name}`}
-          onPress={() => connectToDevice(device)}
-        />
-      ))}
+      <GeneralModal
+        visible={isVisible}
+        onClose={() => setIsVisible(false)}
+        onAction={isVisible ? () => setIsVisible(false) : () => {}}
+        heading="No device connected"
+        title="Please connect the device through app to Continue"
+        buttonTitle="Okay"
+        logo={Images.Inadequate} // Pass the logo here
+      />
     </View>
   );
 };

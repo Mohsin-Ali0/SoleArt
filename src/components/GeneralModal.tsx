@@ -51,7 +51,7 @@ const GeneralModal: React.FC<GeneralModalProps> = ({
           <Image
             source={logo}
             resizeMode="contain"
-            style={{width: 50, height: 50, marginBottom: ScreenHEIGHT * 0.02}}
+            style={{width: 250, height: 250, marginBottom: ScreenHEIGHT * 0.02}}
           />
           <TouchableOpacity style={styles.button} onPress={onAction}>
             <Text style={styles.buttonText}>{buttonTitle}</Text>
@@ -88,6 +88,10 @@ const styles = StyleSheet.create({
   },
   closeIcon: {
     alignSelf: 'flex-end',
+    height: ScreenHEIGHT * 0.03,
+    width: ScreenHEIGHT * 0.03,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   heading: {
     fontSize: fontSize.regular2,

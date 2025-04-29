@@ -22,7 +22,7 @@ import {
   handleGoogleSignIn,
 } from '../../../services/SignInServices';
 import {useUserContext} from '../../../context/AuthContext';
-import {navigate} from '../../../navigation/navigationRef';
+import {navigate, reset} from '../../../navigation/navigationRef';
 
 const RegisterScreen = () => {
   const navigation = useNavigation<any>();
@@ -151,7 +151,7 @@ const RegisterScreen = () => {
           uid: user.uid,
           photoURL: user.photoURL || null,
         });
-        navigate('AppFlow');
+        reset([{name: 'AppFlow'}]);
       } catch (err: any) {
         console.error('Registration error:', err);
         HandleError(err.message, 'email');
@@ -176,7 +176,7 @@ const RegisterScreen = () => {
               uid: userCredential.user.uid,
               photoURL: userCredential.user.photoURL || null,
             });
-            navigate('AppFlow');
+            reset([{name: 'AppFlow'}]);
           })
           .catch(err => {
             console.error('Google login error:', err);
@@ -196,7 +196,7 @@ const RegisterScreen = () => {
               uid: userCredential?.user?.uid,
               photoURL: userCredential?.user?.photoURL || null,
             });
-            navigate('AppFlow');
+            reset([{name: 'AppFlow'}]);
           })
           .catch(err => {
             console.error('Facebook login error:', err);

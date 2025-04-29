@@ -108,7 +108,7 @@ const LoginScreen = () => {
           uid: userCredential.user.uid,
           photoURL: userCredential.user.photoURL || null,
         });
-        reset([{name: 'AppFlow'}])
+        reset([{name: 'AppFlow'}]);
       } catch (err: any) {
         console.error('Login error:', err);
         HandleError(err.message, 'email'); // Customize error field as needed
@@ -134,7 +134,7 @@ const LoginScreen = () => {
                 uid: userCredential.user.uid,
                 photoURL: userCredential.user.photoURL || null,
               });
-              reset([{name: 'AppFlow'}])
+              reset([{name: 'AppFlow'}]);
             })
             .catch(err => {
               console.error('Google login error:', err);
@@ -159,7 +159,7 @@ const LoginScreen = () => {
               uid: userCredential?.user.uid,
               photoURL: userCredential?.user.photoURL || null,
             });
-            reset([{name: 'AppFlow'}])
+            reset([{name: 'AppFlow'}]);
             // navigation.reset([{name: 'AppFlow'}])
           })
           .catch(err => {

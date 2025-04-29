@@ -17,7 +17,7 @@ import {fonts, fontSize} from '../../../utils/fonts';
 import AppInput from '../../../components/AppInput';
 import NotificationBottomSheet from '../../../components/Notification';
 import LogoutModal from '../../../components/LogoutModal';
-// import GeneralModal from '../../../components/GeneralModal';
+import GeneralModal from '../../../components/GeneralModal';
 
 const DummyText = {
   text: ' nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut. Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut.',
@@ -90,14 +90,6 @@ const ContactUsScreen = (props: any) => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* <LogoutModal
-        visible={isVisible}
-        onClose={() => setIsVisible(false)}
-        onLogout={() => {
-          setIsVisible(false); // Close modal on Logout
-          navigation.navigate('Login');
-        }}
-      /> */}
       <GeneralModal
         visible={isVisible}
         onClose={() => setIsVisible(false)}

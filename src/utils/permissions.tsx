@@ -44,7 +44,7 @@ export const getRequiredPermissions = () => {
           PERMISSIONS.ANDROID.BLUETOOTH_SCAN,
           PERMISSIONS.ANDROID.BLUETOOTH_CONNECT,
           PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
-          PERMISSIONS.ANDROID.ACCESS_BACKGROUND_LOCATION,
+          // PERMISSIONS.ANDROID.ACCESS_BACKGROUND_LOCATION,
         ]
       : [PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION];
   } else if (Platform.OS === 'ios') {
@@ -62,28 +62,34 @@ export const getRequiredPermissions = () => {
 
 // This function requests permissions for both Android and iOS platforms
 
+// permissions.tsx
 export const requestBluetoothPermissions = async () => {
   if (Platform.OS === 'android') {
-    // Android-specific logic
     const apiLevel = Platform.Version;
-
-    const permissions =
-      apiLevel >= 31
-        ? [
-            PERMISSIONS.ANDROID.BLUETOOTH_SCAN,
-            PERMISSIONS.ANDROID.BLUETOOTH_CONNECT,
-            PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
-          ]
-        : [PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION];
+    const permissions = apiLevel >= 31
+      ? [
+          PERMISSIONS.ANDROID.BLUETOOTH_SCAN,
+          PERMISSIONS.ANDROID.BLUETOOTH_CONNECT,
+          PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+        ]
+      : [
+          PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+          PERMISSIONS.ANDROID.BLUETOOTH,
+          PERMISSIONS.ANDROID.BLUETOOTH_ADMIN,
+        ];
 
     const statuses = await requestMultiplePermissions(permissions);
-    return handleAndroidResults(statuses);
-  } else if (Platform.OS === 'ios') {
-    // iOS-specific logic
-    const status = await request(PERMISSIONS.IOS.BLUETOOTH);
-    return handleiOSResult(status);
+    const granted = Object.values(statuses).every(s => s === RESULTS.GRANTED);
+    
+    // Special handling for Android 12+
+    if (apiLevel >= 31) {
+      return granted && 
+             statuses[PERMISSIONS.ANDROID.BLUETOOTH_SCAN] === RESULTS.GRANTED &&
+             statuses[PERMISSIONS.ANDROID.BLUETOOTH_CONNECT] === RESULTS.GRANTED;
+    }
+    return granted;
   }
-  return false;
+  return true; // iOS handles permissions differently
 };
 
 export const requestLocationPermission = async () => {

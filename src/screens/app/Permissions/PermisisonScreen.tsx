@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
@@ -25,7 +26,7 @@ import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
 import {reset} from '../../../navigation/navigationRef';
 
 const DummyText = {
-  text: 'Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut. Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut. Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut. Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut. Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut.   Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut. Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut. Lorem ipsum dolor sit amet consectetur. Dignissim tortor duis enim lectus diam ut. Nunc tortor pellentesque nunc etiam tellus. Lorem in interdum aliquam eget. Quis eget ornare a interdum ut.',
+  text: '  To provide you with the best experience, we need to access your notifications. This will help us keep you updated with the latest information and alerts.',
 };
 
 const PermissionsScreen = () => {
@@ -37,54 +38,73 @@ const PermissionsScreen = () => {
     setIsNotificationEnabled,
   } = useUserContext();
 
-  const AllowPermissions = async () => {
+  const verifyPermissions = async () => {
+    const requiredPermissions = getRequiredPermissions();
+    const statuses = await Promise.all(requiredPermissions.map(p => check(p)));
+    return statuses.every(status => status === RESULTS.GRANTED);
+  };
+
+  const handleOpenSettings = () => Linking.openSettings();
+
+  const handlePermissionRequest = async () => {
     setIsLoading(true);
     try {
       const requiredPermissions = getRequiredPermissions();
-      let allPermissionsGranted = true;
+      let blockedPermissions = false;
 
+      // Request permissions sequentially
       for (const permission of requiredPermissions) {
-        // Check the current status of the permission
         const status = await check(permission);
 
-        if (status !== RESULTS.GRANTED) {
-          // Request the permission if not already granted
-          const requestResult = await request(permission);
+        if (status === RESULTS.BLOCKED) {
+          blockedPermissions = true;
+          continue;
+        }
 
-          // If any permission is denied or blocked, set the flag to false
-          if (requestResult !== RESULTS.GRANTED) {
-            allPermissionsGranted = false;
-            Alert.alert(
-              'Permission Required',
-              `The app requires ${permission} permission to function properly.`,
-              [{text: 'OK'}],
-            );
-            break; // Stop requesting further permissions if one is denied
-          }
+        if (status !== RESULTS.GRANTED) {
+          const result = await request(permission);
+          if (result === RESULTS.BLOCKED) blockedPermissions = true;
         }
       }
 
-      // If all permissions are granted, update the states
-      if (allPermissionsGranted) {
+      console.log('Permissions Status:', requiredPermissions);
+      console.log('Blocked Permissions:', blockedPermissions);
+      // Check if any permissions are permanently denied
+
+      if (blockedPermissions) {
+        Alert.alert(
+          'Permissions Required',
+          'Some permissions are permanently denied. Please enable them in settings.',
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Open Settings', onPress: handleOpenSettings},
+          ],
+        );
+        return;
+      }
+
+      const allGranted = await verifyPermissions();
+
+      if (allGranted) {
         setIsBluetoothEnabled(true);
         setIsLocationEnabled(true);
         setIsNotificationEnabled(true);
-
-        Alert.alert('Success', 'All permissions have been granted.', [
-          {text: 'OK'},
-        ]);
+        // reset([{name: 'AppFlow'}]); // Navigate directly to main app
+      } else {
+        Alert.alert(
+          'Permissions Needed',
+          'All permissions are required to use the app',
+          [{text: 'Try Again', onPress: handlePermissionRequest}],
+        );
       }
     } catch (error) {
-      console.error('Error requesting permissions:', error);
-      Alert.alert(
-        'Error',
-        'An error occurred while requesting permissions. Please try again.',
-        [{text: 'OK'}],
-      );
+      console.error('Permission error:', error);
+      Alert.alert('Error', 'Failed to request permissions. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
+  
   return (
     <LinearGradient
       colors={[color.secondary, color.primary]}
@@ -110,7 +130,7 @@ const PermissionsScreen = () => {
         {/* Login Button */}
         <TouchableOpacity
           style={styles.loginButton}
-          onPress={AllowPermissions}
+          onPress={handlePermissionRequest}
           disabled={isLoading}>
           {isLoading ? (
             <ActivityIndicator size="large" color={color.white} />

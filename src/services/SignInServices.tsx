@@ -136,12 +136,29 @@ export const handleAppleSignIn = async () => {
 
 export const handleSignOut = async (clearUserDetails: () => void) => {
   try {
-    await auth().signOut();
+    const currentUser = auth().currentUser;
+    await clearUserDetails();
+
+    if (currentUser) {
+      // Sign out from Firebase Auth
+      await auth().signOut();
+      console.log('Firebase sign-out successful');
+    } else {
+      console.log('No user currently signed in to Firebase Auth');
+    }
+
+    // Revoke Google Sign-In access
     await GoogleSignin.revokeAccess();
     await GoogleSignin.signOut();
+    console.log('Google sign-out successful');
+
+    // Log out from Facebook
     await LoginManager.logOut();
-    await clearUserDetails(); // Make sure this is called after sign-out
-    console.log('Sign-Out successful');
+    console.log('Facebook log-out successful');
+
+    // Clear user details from the app context
+    await clearUserDetails();
+    console.log('User details cleared successfully');
   } catch (error) {
     console.error('Sign-Out Error:', error);
   }

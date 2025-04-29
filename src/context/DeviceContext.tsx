@@ -1,5 +1,11 @@
 // src/contexts/DeviceContext.tsx
-import React, {createContext, useContext, useState, useEffect} from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
 import {BleManager, Device, Characteristic} from 'react-native-ble-plx';
 import {
   BLE_SERVICE_UUID,
@@ -16,10 +22,18 @@ type DeviceContextType = {
   isConnected: boolean;
   cycleStatus: string;
   notifications: string[];
+  connectedDevice: Device | null;
+  connecting: boolean;
+  timer: Number;
+  pressure: Number;
   scanDevices: () => void;
+  StartCycle: (type: string) => void;
+  StopCycle: () => void;
   connectToDevice: (device: Device) => Promise<void>;
   sendCommand: (command: string) => Promise<void>;
   disconnectDevice: () => Promise<void>;
+  connectionError: string | null;
+  disconnectError: string | null;
 };
 
 const DeviceContext = createContext<DeviceContextType>({} as DeviceContextType);
@@ -30,54 +44,95 @@ export const DeviceProvider: React.FC<React.PropsWithChildren<{}>> = ({
   const [bleManager] = useState(new BleManager());
   const [devices, setDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [cycleStatus, setCycleStatus] = useState('DISCONNECTED');
+  const [connecting, setConnecting] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const [pressure, setPressure] = useState(500);
+  const [cycleStatus, setCycleStatus] = useState('Idle');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [disconnectError, setDisconnectError] = useState<string | null>(null);
 
-  // Scan for PrepShef devices
+  // DeviceContext.tsx
   const scanDevices = async () => {
     setIsCheckingPermissions(true);
+    clearErrors();
     try {
       const hasPermission = await requestBluetoothPermissions();
       if (!hasPermission) {
-        console.error('Bluetooth permissions not granted');
+        Alert.alert(
+          'Permissions required',
+          'Bluetooth permissions not granted',
+        );
         return;
       }
 
-      // Check Bluetooth state
-      const subscription = bleManager.onStateChange(state => {
+      const state = await bleManager.state();
+      if (state !== 'PoweredOn') {
+        Alert.alert('Bluetooth Off', 'Please enable Bluetooth to scan');
+        return;
+      }
+
+      // Clear existing devices
+      setDevices([]);
+
+      // Stop any existing scans
+      bleManager.stopDeviceScan();
+
+      // Start new scan with error handling
+      const subscription = bleManager.onStateChange(async state => {
         if (state === 'PoweredOn') {
+          console.log('Bluetooth is powered on, starting scan...');
+          // bleManager.startDeviceScan(
+          //   [BLE_SERVICE_UUID],
+          //   null,
+          //   (error, device) => {
+          //     console.log('Scanning for devices...', device);
+          //     if (error) {
+          //       console.error('Scan error:', error);
+          //       subscription.remove();
+          //       bleManager.stopDeviceScan();
+          //       return;
+          //     }
+          //     console.log('Discovered device:', device);
+          //     if (device) {
+          //       setDevices(prev => {
+          //         const exists = prev.some(d => d.id === device.id);
+          //         return exists ? prev : [...prev, device];
+          //       });
+          //     }
+          //   },
+          // );
+
           bleManager.startDeviceScan(
-            [BLE_SERVICE_UUID],
-            null,
+            null, // Remove service UUID filter
+            {allowDuplicates: false},
             (error, device) => {
               if (error) {
                 console.error('Scan error:', error);
                 return;
               }
-              if (device?.name?.includes('PrepShef')) {
-                setDevices(prev => [
-                  ...prev.filter(d => d.id !== device.id),
-                  device,
-                ]);
+              // Remove name filter - accept all devices
+              if (device && device.isConnectable) {
+                setDevices(prev => {
+                  const exists = prev.some(d => d.id === device.id);
+                  return exists ? prev : [...prev, device];
+                });
               }
             },
           );
-          subscription.remove(); // stop listening after starting scan
-        } else {
-          console.warn('Bluetooth not powered on');
-          Alert.alert(
-            'Bluetooth is Off',
-            'Please turn on Bluetooth to scan for devices.',
-          );
+
+          console.log('Scanning for devices...', subscription);
+          // Stop scanning after 10 seconds
+          setTimeout(() => {
+            subscription.remove();
+            bleManager.stopDeviceScan();
+          }, 10000);
         }
       }, true);
     } catch (error) {
-      console.error('Permission error:', error);
-      Alert.alert(
-        'Bluetooth Error',
-        'Cannot scan without required permissions',
-      );
+      console.error('Scan error:', error);
+      Alert.alert('Scan Failed', 'Could not start scanning. Please try again.');
     } finally {
       setIsCheckingPermissions(false);
     }
@@ -86,6 +141,9 @@ export const DeviceProvider: React.FC<React.PropsWithChildren<{}>> = ({
   // Connect to device
   const connectToDevice = async (device: Device) => {
     try {
+      clearErrors();
+      setConnecting(true);
+
       const connected = await device.connect();
       const discovered =
         await connected.discoverAllServicesAndCharacteristics();
@@ -97,7 +155,7 @@ export const DeviceProvider: React.FC<React.PropsWithChildren<{}>> = ({
         (error, characteristic) => {
           if (error || !characteristic?.value) return;
           const status = atob(characteristic.value);
-          setCycleStatus(status);
+          // setCycleStatus(status);
         },
       );
 
@@ -113,9 +171,12 @@ export const DeviceProvider: React.FC<React.PropsWithChildren<{}>> = ({
       );
 
       setConnectedDevice(discovered);
-      setCycleStatus('IDLE');
+      setCycleStatus('Idle');
     } catch (error) {
       console.error('Connection failed:', error);
+      setConnectionError((error as Error)?.message || 'Connection failed');
+    } finally {
+      setConnecting(false);
     }
   };
 
@@ -134,6 +195,29 @@ export const DeviceProvider: React.FC<React.PropsWithChildren<{}>> = ({
     }
   };
 
+  const disconnectDevice = async () => {
+    try {
+      if (!connectedDevice) {
+        setDisconnectError('No device connected');
+        return;
+      }
+      if (connectedDevice) {
+        await connectedDevice.cancelConnection();
+        setConnectedDevice(null);
+        setCycleStatus('Idle');
+        setNotifications([]);
+        console.log('Disconnected from device');
+      }
+    } catch (error) {
+      console.error('Disconnection failed:', error);
+      setConnectedDevice(null);
+      setCycleStatus('Idle');
+      setNotifications([]);
+      setConnecting(false);
+      setDisconnectError((error as Error)?.message || 'Connection failed');
+    }
+  };
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -142,6 +226,47 @@ export const DeviceProvider: React.FC<React.PropsWithChildren<{}>> = ({
     };
   }, []);
 
+  const intervalRef = useRef(null);
+
+  const StartCycle = (type: String) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    switch (type) {
+      case 'Begin Conditioning':
+        setCycleStatus('Conditioning');
+        setTimer(0);
+        RunTimer();
+
+        break;
+      case 'Begin Freeze Drying':
+        setCycleStatus('Freeze Drying');
+        setTimer(0);
+        RunTimer();
+        break;
+      default:
+        break;
+    }
+  };
+
+  const StopCycle = () => {
+    setCycleStatus('Idle');
+    setTimer(0);
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  };
+  const RunTimer = () => {
+    intervalRef.current = setInterval(() => {
+      setTimer(prevTimer => prevTimer + 1);
+    }, 1000);
+  };
+  const clearErrors = () => {
+    setConnectionError(null);
+    setDisconnectError(null);
+  };
   return (
     <DeviceContext.Provider
       value={{
@@ -152,11 +277,15 @@ export const DeviceProvider: React.FC<React.PropsWithChildren<{}>> = ({
         scanDevices,
         connectToDevice,
         sendCommand,
-        disconnectDevice: async () => {
-          await connectedDevice?.cancelConnection();
-          setConnectedDevice(null);
-          setCycleStatus('DISCONNECTED');
-        },
+        connectedDevice,
+        disconnectDevice,
+        connecting,
+        timer,
+        pressure,
+        StopCycle,
+        StartCycle,
+        connectionError,
+        disconnectError,
       }}>
       {children}
     </DeviceContext.Provider>
