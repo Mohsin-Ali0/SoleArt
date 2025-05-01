@@ -74,6 +74,7 @@ export const UserProvider: React.FC<React.PropsWithChildren<{}>> = ({
       setIsLocationEnabled(false);
       setIsNotificationEnabled(false);
       setFcmToken(null);
+      console.log('User details cleared successfully');
     } catch (error) {
       console.error('Error clearing user details:', error);
     }

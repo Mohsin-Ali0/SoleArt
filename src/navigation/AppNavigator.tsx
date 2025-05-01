@@ -3,7 +3,7 @@ import React, {useState} from 'react';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import {createStackNavigator} from '@react-navigation/stack';
 import {View, TouchableOpacity, Text, StyleSheet, Image} from 'react-native';
-import HomeScreen from '../screens/HomeScreen';
+import HomeScreen from '../screens/app/Home/HomeScreen';
 import TermsAndConditionsScreen from '../screens/app/Policies&conditions/TermsAndConditions';
 import PrivacyPolicy from '../screens/app/Policies&conditions/PrivacyPolicy';
 // import ContactUsScreen from '../screens/app/ContactUsScreen';
@@ -22,6 +22,7 @@ import {useUserContext} from '../context/AuthContext';
 import PermissionsScreen from '../screens/app/Permissions/PermisisonScreen';
 import {handleSignOut} from '../services/SignInServices';
 import {reset} from './navigationRef';
+import getStartedScreen from '../screens/auth/getstarted/getStartedScreen';
 
 const Drawer = createDrawerNavigator();
 const AuthStack = createStackNavigator();
@@ -45,9 +46,12 @@ const CustomDrawerContent = ({navigation}: DrawerContentComponentProps) => {
   ];
   const handleLogout = async () => {
     console.log('User logged out');
+    navigation.reset({
+      index: 0,
+      routes: [{name: 'Auth', params: {screen: 'getStarted'}}],
+    });
     await handleSignOut(clearUserDetails);
     setShowModal(false);
-    // reset([{name: 'Auth'}]);
   };
 
   const handleLogoutRequest = () => {
@@ -112,6 +116,7 @@ const AppDrawer = () => (
 const AuthNavigator = () => (
   <AuthStack.Navigator screenOptions={{headerShown: false}}>
     <AuthStack.Screen name="Splash" component={SplashScreen} />
+    <AuthStack.Screen name="getStarted" component={getStartedScreen} />
     <AuthStack.Screen name="Login" component={LoginScreen} />
     <AuthStack.Screen name="Register" component={RegisterScreen} />
     <AuthStack.Screen
@@ -144,11 +149,9 @@ const RootNavigator = () => {
   const {isLoggedIn} = useUserContext();
   return (
     <RootStack.Navigator screenOptions={{headerShown: false}}>
-      {!isLoggedIn ? (
-        <RootStack.Screen name="Auth" component={AuthNavigator} />
-      ) : (
-        <RootStack.Screen name="AppFlow" component={AppNavigator} />
-      )}
+      <RootStack.Screen name="Splash" component={SplashScreen} />
+      <RootStack.Screen name="Auth" component={AuthNavigator} />
+      <RootStack.Screen name="AppFlow" component={AppNavigator} />
     </RootStack.Navigator>
   );
 };

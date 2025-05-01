@@ -8,16 +8,15 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import {useDevice} from '../context/DeviceContext';
-import {ScreenHEIGHT, ScreenWIDTH} from '../utils/dimensions';
-import {Icons, Images} from '../../assets';
-import {color} from '../utils/colors';
-import {fonts, fontSize} from '../utils/fonts';
-import NotificationBottomSheet from '../components/Notification';
+import {useDevice} from '../../../context/DeviceContext';
+import {ScreenHEIGHT, ScreenWIDTH} from '../../../utils/dimensions';
+import {Icons, Images} from '../../../../assets';
+import {color} from '../../../utils/colors';
+import {fonts, fontSize} from '../../../utils/fonts';
+import NotificationBottomSheet from '../../../components/Notification';
 import LottieView from 'lottie-react-native';
-import BluetoothModal from '../components/BluetoothModal';
-import GeneralModal from '../components/GeneralModal';
-
+import BluetoothModal from '../../../components/BluetoothModal';
+import GeneralModal from '../../../components/GeneralModal';
 const HomeScreen = (props: any) => {
   const {
     devices,
@@ -118,7 +117,7 @@ const HomeScreen = (props: any) => {
 
       {cycleStatus !== 'Idle' && (
         <LottieView
-          source={require('../../assets/icons/ripple.json')}
+          source={Icons.RippleLottie}
           autoPlay
           loop
           style={styles.lottie}

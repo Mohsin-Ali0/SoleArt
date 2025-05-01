@@ -32,7 +32,7 @@ const ContactUsScreen = (props: any) => {
   });
 
   const [isSheetVisible, setIsSheetVisible] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   const HandleNotifications = () => {
     setIsLoading(true);

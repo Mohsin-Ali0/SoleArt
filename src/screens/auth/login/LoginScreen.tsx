@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {Icons, Images} from '../../../../assets';
@@ -39,6 +40,7 @@ const LoginScreen = () => {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [ThirdPartyloggingin, setThirdPartyloggingin] = useState(false);
 
   const HandleText = (text: string, field: string) => {
     // Clear error when user starts typing
@@ -110,8 +112,22 @@ const LoginScreen = () => {
         });
         reset([{name: 'AppFlow'}]);
       } catch (err: any) {
-        console.error('Login error:', err);
-        HandleError(err.message, 'email'); // Customize error field as needed
+        console.error('Login error:', err.message);
+        if (err.code === 'auth/user-not-found') {
+          HandleError('User not found', 'email');
+        } else if (err.code === 'auth/wrong-password') {
+          HandleError('Wrong password', 'password');
+        } else if (err.code === 'auth/invalid-email') {
+          HandleError('Invalid email address', 'email');
+        } else if (err.code === 'auth/user-disabled') {
+          HandleError('User disabled', 'email');
+        } else if (err.code === 'auth/too-many-requests') {
+          HandleError('Too many requests. Please try again later.', 'email');
+        } else if (err.code === 'auth/invalid-credential') {
+          HandleError('Invalid email or password', 'email'); // Customize error field as needed
+        } else {
+          HandleError(err.message, 'email'); // Customize error field as needed
+        }
       } finally {
         setIsLoading(false);
       }
@@ -119,6 +135,7 @@ const LoginScreen = () => {
   };
 
   const ThirdPartyLogin = async (type: string) => {
+    setThirdPartyloggingin(true);
     switch (type) {
       case 'google':
         // Handle Google login
@@ -138,6 +155,9 @@ const LoginScreen = () => {
             })
             .catch(err => {
               console.error('Google login error:', err);
+            })
+            .finally(() => {
+              setThirdPartyloggingin(false);
             });
         } catch (error) {
           console.error('Google login error:', error);
@@ -164,6 +184,9 @@ const LoginScreen = () => {
           })
           .catch(err => {
             console.error('Facebook login error:', err);
+          })
+          .finally(() => {
+            setThirdPartyloggingin(false);
           });
         break;
       default:
@@ -172,7 +195,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <>
       <LinearGradient
         colors={[color.secondary, color.primary]}
         style={styles.gradient}
@@ -180,11 +203,11 @@ const LoginScreen = () => {
         end={{x: 2, y: 1}}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate('Splash')}>
+          onPress={() => navigation.navigate('getStarted')}>
           <Image source={Icons.BackIcon} style={styles.backIcon} />
         </TouchableOpacity>
 
-        <View style={styles.formContainer}>
+        <ScrollView style={styles.formContainer}>
           <Image source={Images.Logo} style={styles.logo} />
 
           <View style={styles.inputGroup}>
@@ -200,6 +223,7 @@ const LoginScreen = () => {
               placeholder="Password"
               secureTextEntry
               rightIcon={Icons.EyeClosed}
+              // leftIcon={Icons.EyeOpen}
               onChangeText={(text: string) => HandleText(text, 'password')}
               value={formData.password}
               error={error.password}
@@ -236,14 +260,15 @@ const LoginScreen = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.socialButton}
-              onPress={() => ThirdPartyLogin('apple')}>
+              // onPress={() => ThirdPartyLogin('apple')}
+            >
               <Image source={Icons.AppleLogo} style={styles.socialIcon} />
             </TouchableOpacity>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.socialButton}
               onPress={() => ThirdPartyLogin('facebook')}>
               <Image source={Icons.FacebookLogo} style={styles.socialIcon} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* Registration Link */}
@@ -253,9 +278,15 @@ const LoginScreen = () => {
               <Text style={styles.registerLink}>Register</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </LinearGradient>
-    </TouchableWithoutFeedback>
+      {ThirdPartyloggingin && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.primary} />
+          <Text style={styles.loadingText}>Logging in...</Text>
+        </View>
+      )}
+    </>
   );
 };
 
@@ -351,8 +382,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 'auto',
+    // marginTop: 'auto',
     marginBottom: ScreenHEIGHT * 0.04,
+    marginTop: ScreenHEIGHT * 0.04,
   },
   registerText: {
     fontFamily: fonts.urbanistMedium,
@@ -365,6 +397,23 @@ const styles = StyleSheet.create({
     color: color.secondary,
     borderBottomWidth: 0.8,
     borderBottomColor: color.secondary,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: color.transparent,
+    opacity: 0.8,
+  },
+  loadingText: {
+    fontFamily: fonts.urbanistMedium,
+    fontSize: fontSize.xxsmall,
+    color: color.grey1,
+    marginTop: ScreenHEIGHT * 0.02,
   },
 });
 

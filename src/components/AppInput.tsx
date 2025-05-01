@@ -151,9 +151,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: ScreenWIDTH * 0.04,
   },
   input: {
-    // flex: 1,
     height: '100%',
-    width: '100%',
+    width: '85%',
     fontFamily: fonts.urbanistMedium,
     fontSize: fontSize.xsmall,
     color: color.grey1,

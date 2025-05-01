@@ -40,6 +40,7 @@ const RegisterScreen = () => {
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [ThirdPartyloggingin, setThirdPartyloggingin] = useState(false);
   const HandleText = (text: string, field: string) => {
     // Clear error when user starts typing
     HandleError('', field);
@@ -153,8 +154,20 @@ const RegisterScreen = () => {
         });
         reset([{name: 'AppFlow'}]);
       } catch (err: any) {
-        console.error('Registration error:', err);
-        HandleError(err.message, 'email');
+        console.error('Registration error:', err.code);
+        if (err.code === 'auth/email-already-in-use') {
+          HandleError('Email already in use', 'email');
+        } else if (err.code === 'auth/invalid-email') {
+          HandleError('Invalid email address', 'email');
+        } else if (err.code === 'auth/weak-password') {
+          HandleError('Weak password', 'password');
+        } else if (err.code === 'auth/operation-not-allowed') {
+          HandleError('Operation not allowed', 'email');
+        } else if (err.code === 'auth/too-many-requests') {
+          HandleError('Too many requests. Try again later.', 'email');
+        } else {
+          HandleError(err.message, 'email');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -162,6 +175,7 @@ const RegisterScreen = () => {
   };
 
   const ThirdPartyLogin = async (type: string) => {
+    setThirdPartyloggingin(true);
     switch (type) {
       case 'google':
         // Handle Google login
@@ -180,6 +194,9 @@ const RegisterScreen = () => {
           })
           .catch(err => {
             console.error('Google login error:', err);
+          })
+          .finally(() => {
+            setThirdPartyloggingin(false);
           });
 
         break;
@@ -200,6 +217,9 @@ const RegisterScreen = () => {
           })
           .catch(err => {
             console.error('Facebook login error:', err);
+          })
+          .finally(() => {
+            setThirdPartyloggingin(false);
           });
         break;
       default:
@@ -208,97 +228,108 @@ const RegisterScreen = () => {
   };
 
   return (
-    <LinearGradient
-      colors={[color.secondary, color.primary]}
-      style={styles.gradient}
-      start={{x: 0, y: 1.1}}
-      end={{x: 2, y: 1}}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.navigate('Splash')}>
-        <Image source={Icons.BackIcon} style={styles.backIcon} />
-      </TouchableOpacity>
-
-      <ScrollView style={styles.formContainer}>
-        <Image source={Images.Logo} style={styles.logo} />
-
-        <View style={styles.inputGroup}>
-          <AppInput
-            placeholder="Name"
-            onChangeText={(text: string) => HandleText(text, 'name')}
-            value={formData.name}
-            error={error.name}
-          />
-          <AppInput
-            placeholder="Email"
-            keyboardType="email-address"
-            onChangeText={(text: string) => HandleText(text, 'email')}
-            value={formData.email}
-            error={error.email}
-          />
-          <AppInput
-            placeholder="Password"
-            secureTextEntry
-            rightIcon={Icons.EyeClosed}
-            onChangeText={(text: string) => HandleText(text, 'password')}
-            value={formData.password}
-            error={error.password}
-          />
-          <AppInput
-            placeholder="Confirm Password"
-            secureTextEntry
-            rightIcon={Icons.EyeClosed}
-            onChangeText={(text: string) => HandleText(text, 'confirmPassword')}
-            value={formData.confirmPassword}
-            error={error.confirmPassword}
-          />
-        </View>
-
-        {/* Login Button */}
+    <>
+      <LinearGradient
+        colors={[color.secondary, color.primary]}
+        style={styles.gradient}
+        start={{x: 0, y: 1.1}}
+        end={{x: 2, y: 1}}>
         <TouchableOpacity
-          style={styles.loginButton}
-          onPress={HandleRegister}
-          disabled={isLoading}>
-          {isLoading ? (
-            <ActivityIndicator size="large" color={color.white} />
-          ) : (
-            <Text style={styles.buttonText}>Register</Text>
-          )}
+          style={styles.backButton}
+          onPress={() => navigation.navigate('getStarted')}>
+          <Image source={Icons.BackIcon} style={styles.backIcon} />
         </TouchableOpacity>
 
-        {/* Separator */}
-        <View style={styles.separator}>
-          <View style={styles.line} />
-          <Text style={styles.separatorText}>Or login with</Text>
-          <View style={styles.line} />
-        </View>
+        <ScrollView style={styles.formContainer}>
+          <Image source={Images.Logo} style={styles.logo} />
 
-        {/* Social Login Buttons */}
-        <View style={styles.socialButtons}>
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={() => ThirdPartyLogin('google')}>
-            <Image source={Icons.GoogleLogo} style={styles.socialIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={Icons.AppleLogo} style={styles.socialIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={() => ThirdPartyLogin('facebook')}>
-            <Image source={Icons.FacebookLogo} style={styles.socialIcon} />
-          </TouchableOpacity>
-        </View>
+          <View style={styles.inputGroup}>
+            <AppInput
+              placeholder="Name"
+              onChangeText={(text: string) => HandleText(text, 'name')}
+              value={formData.name}
+              error={error.name}
+            />
+            <AppInput
+              placeholder="Email"
+              keyboardType="email-address"
+              onChangeText={(text: string) => HandleText(text, 'email')}
+              value={formData.email}
+              error={error.email}
+            />
+            <AppInput
+              placeholder="Password"
+              secureTextEntry
+              rightIcon={Icons.EyeClosed}
+              onChangeText={(text: string) => HandleText(text, 'password')}
+              value={formData.password}
+              error={error.password}
+            />
+            <AppInput
+              placeholder="Confirm Password"
+              secureTextEntry
+              rightIcon={Icons.EyeClosed}
+              onChangeText={(text: string) =>
+                HandleText(text, 'confirmPassword')
+              }
+              value={formData.confirmPassword}
+              error={error.confirmPassword}
+            />
+          </View>
 
-        {/* Registration Link */}
-        <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.registerLink}>Login</Text>
+          {/* Login Button */}
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={HandleRegister}
+            disabled={isLoading}>
+            {isLoading ? (
+              <ActivityIndicator size="large" color={color.white} />
+            ) : (
+              <Text style={styles.buttonText}>Register</Text>
+            )}
           </TouchableOpacity>
+
+          {/* Separator */}
+          <View style={styles.separator}>
+            <View style={styles.line} />
+            <Text style={styles.separatorText}>Or login with</Text>
+            <View style={styles.line} />
+          </View>
+
+          {/* Social Login Buttons */}
+          <View style={styles.socialButtons}>
+            <TouchableOpacity
+              style={styles.socialButton}
+              onPress={() => ThirdPartyLogin('google')}>
+              <Image source={Icons.GoogleLogo} style={styles.socialIcon} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton}>
+              <Image source={Icons.AppleLogo} style={styles.socialIcon} />
+            </TouchableOpacity>
+            {/* <TouchableOpacity
+              style={styles.socialButton}
+              onPress={() => ThirdPartyLogin('facebook')}>
+              <Image source={Icons.FacebookLogo} style={styles.socialIcon} />
+            </TouchableOpacity> */}
+          </View>
+
+          {/* Registration Link */}
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.registerLink}>Login</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+
+      {ThirdPartyloggingin && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.primary} />
+          <Text style={styles.loadingText}>Logging in...</Text>
         </View>
-      </ScrollView>
-    </LinearGradient>
+      )}
+    </>
   );
 };
 
@@ -411,6 +442,23 @@ const styles = StyleSheet.create({
     color: color.secondary,
     borderBottomWidth: 0.8,
     borderBottomColor: color.secondary,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: color.transparent,
+    opacity: 0.8,
+  },
+  loadingText: {
+    fontFamily: fonts.urbanistMedium,
+    fontSize: fontSize.xxsmall,
+    color: color.grey1,
+    marginTop: ScreenHEIGHT * 0.02,
   },
 });
 

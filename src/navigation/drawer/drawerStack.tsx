@@ -8,7 +8,7 @@ import {
   createDrawerNavigator,
   DrawerContentComponentProps,
 } from '@react-navigation/drawer';
-import HomeScreen from '../../screens/HomeScreen';
+import HomeScreen from '../../screens/app/Home/HomeScreen';
 import {Text} from 'react-native-gesture-handler';
 
 const Drawer = createDrawerNavigator();
